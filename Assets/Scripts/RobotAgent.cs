@@ -74,31 +74,31 @@ public override void OnActionReceived(ActionBuffers actions)
     // Reward for moving closer to the target
     if (distanceDelta > 0)
     {
-        float reward = Mathf.Clamp(distanceDelta / previousDistanceToTarget, 0.05f, 0.1f);
+        float reward = Mathf.Clamp(distanceDelta / previousDistanceToTarget, 0.02f, 0.05f);
         AddReward(reward);
     }
     else
     {
-        AddReward(-0.02f); // Reduced penalty for moving away from the target
+        AddReward(-0.02f); // Increased penalty for moving away from the target
     }
 
     // Penalize for getting stuck or minimal movement
     if (rb.velocity.magnitude < 0.01f)
     {
-        AddReward(-0.02f); // Reduced penalty for getting stuck
+        AddReward(-0.1f); // Increased penalty for getting stuck
     }
 
     // Penalize for stalling
     if (Time.time - lastSignificantMoveTime > significantMoveThreshold)
     {
-        AddReward(-0.1f); // Adjusted penalty for not making significant progress
+        AddReward(-0.1f); // Increased penalty for not making significant progress
     }
 
     // Encourage exploration
     Vector3 currentDirection = transform.forward;
     if (Vector3.Dot(currentDirection, previousDirection) < 0.9f)
     {
-        AddReward(0.02f); // Small reward for exploration
+        AddReward(0.05f); // Small reward for exploration
     }
     else
     {
@@ -112,7 +112,7 @@ public override void OnActionReceived(ActionBuffers actions)
     // Check if the agent has reached the target
     if (distanceToTarget < 1.0f)
     {
-        SetReward(5f); // Increased reward for reaching the goal
+        SetReward(50f); // Increased reward for reaching the goal
         EndEpisode();
     }
 
