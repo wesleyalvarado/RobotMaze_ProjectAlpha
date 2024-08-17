@@ -59,78 +59,65 @@ public class RobotAgent : Agent
         sensor.AddObservation(exitPoint.position);
     }
 
-    public override void OnActionReceived(ActionBuffers actions)
+public override void OnActionReceived(ActionBuffers actions)
+{
+    float moveX = actions.ContinuousActions[0];
+    float moveZ = actions.ContinuousActions[1];
+
+    Vector3 direction = new Vector3(moveX, 0, moveZ).normalized;
+    Vector3 movement = direction * moveSpeed;
+    rb.AddForce(movement, ForceMode.VelocityChange);
+
+    float distanceToTarget = Vector3.Distance(transform.position, exitPoint.position);
+    float distanceDelta = previousDistanceToTarget - distanceToTarget;
+
+    // Reward for moving closer to the target
+    if (distanceDelta > 0)
     {
-        // Get continuous actions from Unity ML-Agents
-        float moveX = actions.ContinuousActions[0];
-        float moveZ = actions.ContinuousActions[1];
-
-        // Debug logging to check action values
-        Debug.Log($"Action Received - X: {moveX}, Z: {moveZ}");
-
-        // Create a movement vector and apply force
-        Vector3 direction = new Vector3(moveX, 0, moveZ).normalized;
-        Vector3 movement = direction * moveSpeed;
-        rb.AddForce(movement, ForceMode.VelocityChange);
-        
-        // Debug logging to check movement values
-        Debug.Log($"Direction: {direction}, Movement: {movement}");
-
-        // Calculate and log rewards
-        float distanceToTarget = Vector3.Distance(transform.position, exitPoint.position);
-
-        // Log distance for debugging
-        Debug.Log($"Distance to Target: {distanceToTarget}");
-
-        // Proportional reward based on progress
-        float distanceDelta = previousDistanceToTarget - distanceToTarget;
-        if (distanceDelta > 0)
-        {
-            float reward = Mathf.Clamp(distanceDelta / previousDistanceToTarget, 0.01f, 0.1f);
-            AddReward(reward); // Reward for moving closer to the target
-        }
-        else
-        {
-            AddReward(-0.01f); // Penalty for moving away or minimal movement
-        }
-
-        // Penalize for colliding with walls
-        if (rb.velocity.magnitude < 0.01f) // Check if the agent is stationary
-        {
-            AddReward(-0.01f); // Penalty for getting stuck
-        }
-
-        // Penalize for stalling
-        if (Time.time - lastSignificantMoveTime > significantMoveThreshold)
-        {
-            AddReward(-0.05f); // Penalty for not making significant progress
-        }
-
-        // Encourage exploration by rewarding directional changes
-        Vector3 currentDirection = transform.forward;
-        if (Vector3.Dot(currentDirection, previousDirection) < 0.9f) // Reward for significant direction change
-        {
-            AddReward(0.01f); // Small reward for exploring different directions
-        }
-        else
-        {
-            AddReward(-0.01f); // Penalty for sticking to the same direction
-        }
-        previousDirection = currentDirection;
-
-        lastSignificantMoveTime = Time.time; // Update time of significant move
-        previousDistanceToTarget = distanceToTarget;
-
-        // Check if the agent has reached the target
-        if (distanceToTarget < 1.0f)
-        {
-            SetReward(1f);  // Max reward for reaching the target
-            EndEpisode();
-        }
-
-        // Log current cumulative reward
-        Debug.Log($"Current Cumulative Reward: {GetCumulativeReward()}");
+        float reward = Mathf.Clamp(distanceDelta / previousDistanceToTarget, 0.05f, 0.1f);
+        AddReward(reward);
     }
+    else
+    {
+        AddReward(-0.02f); // Reduced penalty for moving away from the target
+    }
+
+    // Penalize for getting stuck or minimal movement
+    if (rb.velocity.magnitude < 0.01f)
+    {
+        AddReward(-0.02f); // Reduced penalty for getting stuck
+    }
+
+    // Penalize for stalling
+    if (Time.time - lastSignificantMoveTime > significantMoveThreshold)
+    {
+        AddReward(-0.1f); // Adjusted penalty for not making significant progress
+    }
+
+    // Encourage exploration
+    Vector3 currentDirection = transform.forward;
+    if (Vector3.Dot(currentDirection, previousDirection) < 0.9f)
+    {
+        AddReward(0.02f); // Small reward for exploration
+    }
+    else
+    {
+        AddReward(-0.01f); // Minor penalty for sticking to the same direction
+    }
+
+    previousDirection = currentDirection;
+    lastSignificantMoveTime = Time.time;
+    previousDistanceToTarget = distanceToTarget;
+
+    // Check if the agent has reached the target
+    if (distanceToTarget < 1.0f)
+    {
+        SetReward(5f); // Increased reward for reaching the goal
+        EndEpisode();
+    }
+
+    Debug.Log($"Current Cumulative Reward: {GetCumulativeReward()}");
+}
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
