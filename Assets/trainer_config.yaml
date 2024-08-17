@@ -1,0 +1,15 @@
+behaviors:
+  RobotAgent:
+    trainer_type: ppo
+    hyperparameters:
+      learning_rate: 0.001
+      batch_size: 64
+      buffer_size: 2048
+      num_epoch: 3
+      learning_rate_schedule: linear
+    network_settings:
+      hidden_units: 128
+      num_hidden_layers: 2
+    reward_signals:
+      extrinsic:
+        gamma: 0.99
