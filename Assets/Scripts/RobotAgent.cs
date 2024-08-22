@@ -2,15 +2,21 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using System.Collections;
 
 public class RobotAgent : Agent
 {
+
+    public ObstacleManager obstacleManager; // Reference to the ObstacleManager
+
     public float moveSpeed = 10f;
 
     public Vector2 floorSize = new Vector2(50f, 50f); // Size of the floor area for randomization
-    public float floorY = 1f; // Y position of the floor
+    public float floorY = 2f; // Y position of the floor
+    public LayerMask wallLayer;
 
-    public float minimumDistanceFromWalls = 2f; // Minimum distance from walls to avoid overlap
+
+    public float minimumDistanceFromWalls = 1f; // Define your minimum distance
     public float floorHeight = 2f; // Height of the floor
     public Transform startPosition;  // Assign in Unity Editor for agent's start position
     public Transform exitPoint;      // Assign in Unity Editor for target position
@@ -29,15 +35,18 @@ public class RobotAgent : Agent
     private float frontDistance;
     private float leftDistance;
     private float rightDistance;
+    private CameraSwitcher cameraSwitcher;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        cameraSwitcher = FindObjectOfType<CameraSwitcher>();
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.useGravity = true;
 
         if (exitPoint == null) Debug.LogError("Exit point (target) is not assigned!");
+
     }
 
     public override void OnEpisodeBegin()
@@ -58,6 +67,18 @@ public class RobotAgent : Agent
             previousDirection = transform.forward;
             lastSignificantMoveTime = Time.time;
         }
+
+        // Call ResetObstacles to reset obstacle positions
+        if (obstacleManager != null)
+        {
+            obstacleManager.ResetObstacles();
+        }
+        else
+        {
+            Debug.LogWarning("ObstacleManager is not assigned!");
+        }
+        // Start the camera switch coroutine
+        StartCoroutine(WaitForCameraSwitch());
     }
 
     private Vector3 GetRandomStartPosition()
@@ -87,17 +108,16 @@ public class RobotAgent : Agent
 
     private bool IsValidStartPosition(Vector3 position)
     {
-        // Check for collisions or proximity to walls
-        Collider[] hitColliders = Physics.OverlapSphere(position, minimumDistanceFromWalls);
-        foreach (Collider collider in hitColliders)
-        {
-            if (collider.CompareTag("Wall")) // Assuming walls are tagged with "Wall"
-            {
-                return false;
-            }
-        }
+    // Use Physics.OverlapSphere to get all colliders within the radius
+    Collider[] hitColliders = Physics.OverlapSphere(position, minimumDistanceFromWalls, wallLayer);
+    foreach (Collider collider in hitColliders)
+    {
+        // If the collider is on the wall layer, return false
+        return false;
+    }
 
-        return true;
+    // If no walls are found, return true
+    return true;
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -122,8 +142,19 @@ public class RobotAgent : Agent
         sensor.AddObservation(rightDistance);
     }
 
+    private IEnumerator WaitForCameraSwitch()
+    {
+        // Wait for the camera switch to complete before starting the agent's actions
+        yield return StartCoroutine(cameraSwitcher.SwitchCameraAfterDelay());
+
+        // Agent can start now
+        Debug.Log("Agent can start moving now.");
+    }
+
+
     public override void OnActionReceived(ActionBuffers actions)
     {
+        if (!cameraSwitcher.CanAgentStart()) return; // Wait until the camera switcher allows the agent to start
         float moveX = actions.ContinuousActions[0];
         float moveZ = actions.ContinuousActions[1];
         Vector3 direction = new Vector3(moveX, 0, moveZ).normalized;

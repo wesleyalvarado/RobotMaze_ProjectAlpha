@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.MLAgents;
 
 public class ObstacleMovement : MonoBehaviour
 {
@@ -49,10 +50,7 @@ public class ObstacleMovement : MonoBehaviour
         // Draw a line to visualize movement
         Debug.DrawLine(transform.position, newPosition, Color.red);
 
-        // Move the Rigidbody to the new position
-        rb.MovePosition(newPosition);
-
-        // Adjust velocity for consistent movement speed
+        // Set the velocity instead of moving the position directly
         rb.velocity = (newPosition - transform.position) / Time.fixedDeltaTime;
     }
 
@@ -83,5 +81,11 @@ public class ObstacleMovement : MonoBehaviour
             // Retry if the position is invalid
             RandomizePosition();
         }
+    }
+
+    // Method to reset the position at the start of each episode
+    public void ResetObstacle()
+    {
+        RandomizePosition();
     }
 }
