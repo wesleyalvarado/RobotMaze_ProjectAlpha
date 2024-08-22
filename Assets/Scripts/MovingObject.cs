@@ -6,7 +6,7 @@ public class ObstacleMovement : MonoBehaviour
     public float speed = 4f;          // Speed of movement
     public float distance = 20f;      // Distance to move
     public LayerMask wallLayer;       // Layer for walls to check collisions
-    public Vector2 floorSize = new Vector2(50f, 50f); // Size of the floor area for randomization
+    public Vector2 floorSize = new Vector2(100f, 100f); // Size of the floor area for randomization
     public float floorY = 0f;         // Y position of the floor
 
     private Vector3 startPosition;    // Starting position of the obstacle
@@ -73,10 +73,13 @@ public class ObstacleMovement : MonoBehaviour
 
 void RandomizePosition()
 {
+    const int maxAttempts = 100; // Maximum number of attempts to find a valid position
+    int attempts = 0;
+
     bool validPositionFound = false;
     Vector3 randomPosition = Vector3.zero;
 
-    while (!validPositionFound)
+    while (!validPositionFound && attempts < maxAttempts)
     {
         // Generate a random position within the floor area
         randomPosition = new Vector3(
@@ -85,12 +88,13 @@ void RandomizePosition()
             Random.Range(-floorSize.y / 2f, floorSize.y / 2f)
         );
 
-        // Check if the position is not on top of a wall
-        bool isOnWall = Physics.CheckBox(randomPosition, Vector3.one * 0.1f, Quaternion.identity, wallLayer);
+        // Adjust the size of the search box (ensure it's small enough relative to obstacle size)
+        float searchBoxSize = 0.1f;
+        bool isOnWall = Physics.CheckBox(randomPosition, Vector3.one * searchBoxSize, Quaternion.identity, wallLayer);
         bool isOverlappingOtherObstacles = false;
 
         // Check if the position is overlapping with other obstacles
-        Collider[] overlappingObstacles = Physics.OverlapBox(randomPosition, Vector3.one * 0.1f);
+        Collider[] overlappingObstacles = Physics.OverlapBox(randomPosition, Vector3.one * searchBoxSize);
         foreach (Collider collider in overlappingObstacles)
         {
             if (collider.gameObject != gameObject) // Exclude itself
@@ -104,11 +108,26 @@ void RandomizePosition()
         {
             validPositionFound = true;
         }
+
+        attempts++;
     }
 
     // Set the position if it's valid
-    startPosition = randomPosition;
-    transform.position = startPosition;
+    if (validPositionFound)
+    {
+        startPosition = randomPosition;
+        transform.position = startPosition;
+    }
+    else
+    {
+        Debug.LogWarning("Failed to find a valid position after " + maxAttempts + " attempts.");
+    }
+}
+
+void OnDrawGizmos()
+{
+    Gizmos.color = Color.red;
+    Gizmos.DrawWireCube(transform.position, Vector3.one * 0.1f);
 }
     // Method to reset the position at the start of each episode
     public void ResetObstacle()
