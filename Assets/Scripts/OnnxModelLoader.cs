@@ -22,7 +22,7 @@ public class ONNXModelRunner : MonoBehaviour
 
             // Initialize ONNX Runtime
             var options = new SessionOptions();
-            _session = new InferenceSession(modelPath, options); 
+            _session = new InferenceSession(modelPath, options);
         }
         catch (Exception ex)
         {
@@ -36,7 +36,7 @@ public class ONNXModelRunner : MonoBehaviour
         {
             // Ensure the input data has the expected size (e.g., 24).
             int expectedInputSize = 24;
-            
+
             if (inputData.Length != expectedInputSize)
             {
                 Debug.LogWarning($"Adjusting input data size from {inputData.Length} to {expectedInputSize}");

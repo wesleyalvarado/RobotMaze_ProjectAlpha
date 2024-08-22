@@ -15,7 +15,7 @@ public class RobotAgentOnnx : Agent
     private float previousDistanceToTarget;
     private float lastSignificantMoveTime;
     private Vector3 previousDirection;
-    
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -72,7 +72,7 @@ public class RobotAgentOnnx : Agent
         Vector3 direction = new Vector3(moveX, 0, moveZ).normalized;
         Vector3 movement = direction * moveSpeed;
         rb.AddForce(movement, ForceMode.VelocityChange);
-        
+
         // Debug logging to check movement values
         Debug.Log($"Direction: {direction}, Movement: {movement}");
 
