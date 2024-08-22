@@ -37,6 +37,10 @@ public class ObstacleMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (rb.velocity.magnitude < 0.1f)
+{
+        rb.AddForce(Vector3.up * 0.1f, ForceMode.Impulse); // Small upward force
+}
         // Calculate movement using PingPong for back-and-forth motion along the X-axis
         float movement = Mathf.PingPong(Time.time * speed, distance);
 
@@ -58,31 +62,54 @@ public class ObstacleMovement : MonoBehaviour
     {
         // Log collision information
         Debug.Log("MO Collided with: " + collision.gameObject.name);
+
+        // Apply a bounce back force if the object collides with a wall
+        if ((wallLayer & (1 << collision.gameObject.layer)) != 0) // Check if collision layer is in wallLayer
+        {
+            Vector3 collisionNormal = collision.contacts[0].normal;
+            rb.AddForce(collisionNormal * 2f, ForceMode.Impulse); // Bounce back force
+        }
     }
 
-    void RandomizePosition()
+void RandomizePosition()
+{
+    bool validPositionFound = false;
+    Vector3 randomPosition = Vector3.zero;
+
+    while (!validPositionFound)
     {
-        // Generate random position within the floor area
-        Vector3 randomPosition = new Vector3(
+        // Generate a random position within the floor area
+        randomPosition = new Vector3(
             Random.Range(-floorSize.x / 2f, floorSize.x / 2f),
             floorY,
             Random.Range(-floorSize.y / 2f, floorSize.y / 2f)
         );
 
         // Check if the position is not on top of a wall
-        if (!Physics.CheckBox(randomPosition, Vector3.one * 0.1f, Quaternion.identity, wallLayer))
+        bool isOnWall = Physics.CheckBox(randomPosition, Vector3.one * 0.1f, Quaternion.identity, wallLayer);
+        bool isOverlappingOtherObstacles = false;
+
+        // Check if the position is overlapping with other obstacles
+        Collider[] overlappingObstacles = Physics.OverlapBox(randomPosition, Vector3.one * 0.1f);
+        foreach (Collider collider in overlappingObstacles)
         {
-            // Set the position if it's valid
-            startPosition = randomPosition;
-            transform.position = startPosition;
+            if (collider.gameObject != gameObject) // Exclude itself
+            {
+                isOverlappingOtherObstacles = true;
+                break;
+            }
         }
-        else
+
+        if (!isOnWall && !isOverlappingOtherObstacles)
         {
-            // Retry if the position is invalid
-            RandomizePosition();
+            validPositionFound = true;
         }
     }
 
+    // Set the position if it's valid
+    startPosition = randomPosition;
+    transform.position = startPosition;
+}
     // Method to reset the position at the start of each episode
     public void ResetObstacle()
     {
