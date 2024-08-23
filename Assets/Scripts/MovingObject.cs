@@ -61,7 +61,7 @@ public class ObstacleMovement : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         // Log collision information
-        Debug.Log("MO Collided with: " + collision.gameObject.name);
+        // Debug.Log("MO Collided with: " + collision.gameObject.name);
 
         // Apply a bounce back force if the object collides with a wall
         if ((wallLayer & (1 << collision.gameObject.layer)) != 0) // Check if collision layer is in wallLayer

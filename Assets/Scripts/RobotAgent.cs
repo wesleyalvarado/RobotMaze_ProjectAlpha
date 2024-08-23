@@ -100,7 +100,7 @@ public class RobotAgent : Agent
             validPosition = IsValidStartPosition(randomPosition);
 
             // Debugging output to verify random positions and validity
-            Debug.Log($"Generated Position: {randomPosition}, Valid: {validPosition}");
+            // Debug.Log($"Generated Position: {randomPosition}, Valid: {validPosition}");
         }
 
         return randomPosition;
@@ -120,28 +120,46 @@ public class RobotAgent : Agent
     return true;
     }
 
-    public override void CollectObservations(VectorSensor sensor)
+public override void CollectObservations(VectorSensor sensor)
+{
+    sensor.AddObservation(transform.position); // 3 observations
+    sensor.AddObservation(transform.forward); // 3 observations
+    sensor.AddObservation(rb.velocity); // 3 observations
+    sensor.AddObservation(exitPoint.position); // 3 observations
+
+    RaycastHit hit;
+
+    // Existing Raycasts
+    frontDistance = Physics.Raycast(transform.position, transform.forward, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(frontDistance); // 1 observation
+
+    leftDistance = Physics.Raycast(transform.position, -transform.right, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(leftDistance); // 1 observation
+
+    rightDistance = Physics.Raycast(transform.position, transform.right, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(rightDistance); // 1 observation
+
+    // Additional Raycasts
+    float backDistance = Physics.Raycast(transform.position, -transform.forward, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(backDistance); // 1 observation
+
+    float upDistance = Physics.Raycast(transform.position, transform.up, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(upDistance); // 1 observation
+
+    float downDistance = Physics.Raycast(transform.position, -transform.up, out hit, raycastLength) ? hit.distance : raycastLength;
+    sensor.AddObservation(downDistance); // 1 observation
+
+    // Padding with dummy data (150 dummy observations)
+    for (int i = 0; i < 150; i++)
     {
-        sensor.AddObservation(transform.position);
-        sensor.AddObservation(transform.forward);
-        sensor.AddObservation(rb.velocity);
-        sensor.AddObservation(exitPoint.position);
-
-        RaycastHit hit;
-
-        // Raycast forward
-        frontDistance = Physics.Raycast(transform.position, transform.forward, out hit, raycastLength) ? hit.distance : raycastLength;
-        sensor.AddObservation(frontDistance);
-
-        // Raycast left
-        leftDistance = Physics.Raycast(transform.position, -transform.right, out hit, raycastLength) ? hit.distance : raycastLength;
-        sensor.AddObservation(leftDistance);
-
-        // Raycast right
-        rightDistance = Physics.Raycast(transform.position, transform.right, out hit, raycastLength) ? hit.distance : raycastLength;
-        sensor.AddObservation(rightDistance);
+        sensor.AddObservation(0.0f); // Add padding with 0s
     }
 
+    for (int i = 0; i < 12; i++)
+{
+    sensor.AddObservation(0.0f); // Add 12 more observations
+}
+}
     private IEnumerator WaitForCameraSwitch()
     {
         // Wait for the camera switch to complete before starting the agent's actions
@@ -216,7 +234,7 @@ public class RobotAgent : Agent
             Debug.Log("Episode ended");
         }
 
-        Debug.Log($"Current Cumulative Reward: {GetCumulativeReward()}");
+        // Debug.Log($"Current Cumulative Reward: {GetCumulativeReward()}");
 
         // Check if the agent falls below the floor level
         if (transform.position.y < floorHeight - 0.1f)
@@ -251,6 +269,6 @@ public class RobotAgent : Agent
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log($"Collision detected with: {collision.gameObject.name}");
+        Debug.Log($"Agent Collision detected with: {collision.gameObject.name}");
     }
 }
