@@ -9,7 +9,7 @@ public class ObstacleMovement : MonoBehaviour
     public Vector2 floorSize = new Vector2(100f, 100f); // Size of the floor area for randomization
     public float floorY = 0f;         // Y position of the floor
 
-    private Vector3 startPosition;    // Starting position of the obstacle
+    private Vector3 startPosition;    // Starting position of the obstacl
     private Rigidbody rb;             // Reference to the Rigidbody
 
     void Start()

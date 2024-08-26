@@ -7,6 +7,8 @@ public class CameraSwitcher : MonoBehaviour
     public Camera agentCamera;
     public float overheadViewDuration = 3.0f; // Duration for overhead view
 
+
+
     private bool agentCanStart = false; // Flag to control agent's start
 
     void Start()
@@ -35,4 +37,10 @@ public class CameraSwitcher : MonoBehaviour
     {
         return agentCanStart;
     }
+
+
+
 }
+
+
+
